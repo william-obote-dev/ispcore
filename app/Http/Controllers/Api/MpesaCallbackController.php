@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Invoice;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -20,37 +20,41 @@ class MpesaCallbackController extends Controller
             return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Ignored']);
         }
 
-        $resultCode = $callback['ResultCode'] ?? null;
         $checkoutRequestId = $callback['CheckoutRequestID'] ?? null;
+        $resultCode = $callback['ResultCode'] ?? null;
+
+        $payment = Payment::where('checkout_request_id', $checkoutRequestId)->first();
+
+        if (! $payment) {
+            Log::warning("M-Pesa callback received for unknown CheckoutRequestID: {$checkoutRequestId}");
+            return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Accepted']);
+        }
 
         if ($resultCode === 0) {
             $metadata = collect($callback['CallbackMetadata']['Item'] ?? []);
+            $receiptNumber = $metadata->firstWhere('Name', 'MpesaReceiptNumber')['Value'] ?? null;
 
-            $mpesaReceiptNumber = $metadata->firstWhere('Name', 'MpesaReceiptNumber')['Value'] ?? null;
-            $amountPaid = $metadata->firstWhere('Name', 'Amount')['Value'] ?? null;
-            $accountReference = $this->extractAccountReference($request);
+            $payment->update([
+                'status' => 'completed',
+                'provider_receipt_number' => $receiptNumber,
+                'result_code' => $resultCode,
+                'result_desc' => $callback['ResultDesc'] ?? null,
+                'paid_at' => now(),
+            ]);
 
-            $invoice = Invoice::where('invoice_number', $accountReference)->first();
+            $payment->invoice->update(['status' => 'paid']);
 
-            if ($invoice) {
-                $invoice->update(['status' => 'paid']);
-                Log::info("Invoice {$invoice->invoice_number} marked as paid via M-Pesa. Receipt: {$mpesaReceiptNumber}");
-            } else {
-                Log::warning("M-Pesa payment succeeded but no matching invoice found for reference: {$accountReference}");
-            }
+            Log::info("Payment completed for invoice {$payment->invoice->invoice_number}. Receipt: {$receiptNumber}");
         } else {
-            Log::info("M-Pesa payment failed or cancelled. CheckoutRequestID: {$checkoutRequestId}, ResultCode: {$resultCode}");
+            $payment->update([
+                'status' => 'failed',
+                'result_code' => $resultCode,
+                'result_desc' => $callback['ResultDesc'] ?? null,
+            ]);
+
+            Log::info("Payment failed for invoice {$payment->invoice->invoice_number}. Reason: {$callback['ResultDesc']}");
         }
 
         return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Accepted']);
-    }
-
-    private function extractAccountReference(Request $request): ?string
-    {
-        // Safaricom's callback doesn't echo back AccountReference directly,
-        // so in production we'd look this up via CheckoutRequestID stored
-        // when we initiated the STK push. For now, sandbox testing will
-        // pass it through a query param we control (see routes/api.php).
-        return $request->query('ref');
     }
 }

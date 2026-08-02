@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\Subscription;
 use App\Services\InvoiceService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
 {
@@ -23,4 +24,15 @@ class InvoiceController extends Controller
     {
         return response()->json($invoice->load('items', 'customer', 'subscription.plan'));
     }
+
+    public function pay(Request $request, Invoice $invoice)
+    {
+    $validated = $request->validate([
+        'phone' => 'required|string',
+    ]);
+
+    $payment = app(\App\Services\MpesaService::class)->stkPush($invoice, $validated['phone']);
+
+    return response()->json($payment);
+     }
 }

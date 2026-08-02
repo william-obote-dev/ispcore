@@ -4,6 +4,8 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use App\Models\Invoice;
+use App\Models\Payment;
 
 class MpesaService
 {
@@ -25,12 +27,13 @@ class MpesaService
         });
     }
 
-    public function stkPush(string $phone, float $amount, string $accountReference, string $description): array
+    public function stkPush(Invoice $invoice, string $phone): Payment
 {
     $shortcode = config('mpesa.shortcode');
     $passkey = config('mpesa.passkey');
     $timestamp = now()->format('YmdHis');
     $password = base64_encode($shortcode . $passkey . $timestamp);
+    $formattedPhone = $this->formatPhone($phone);
 
     $response = Http::withToken($this->getAccessToken())
         ->post(config('mpesa.base_url') . '/mpesa/stkpush/v1/processrequest', [
@@ -38,20 +41,29 @@ class MpesaService
             'Password' => $password,
             'Timestamp' => $timestamp,
             'TransactionType' => 'CustomerPayBillOnline',
-            'Amount' => (int) $amount,
-            'PartyA' => $this->formatPhone($phone),
+            'Amount' => (int) $invoice->total,
+            'PartyA' => $formattedPhone,
             'PartyB' => $shortcode,
-            'PhoneNumber' => $this->formatPhone($phone),
+            'PhoneNumber' => $formattedPhone,
             'CallBackURL' => config('mpesa.callback_url'),
-            'AccountReference' => $accountReference,
-            'TransactionDesc' => $description,
+            'AccountReference' => $invoice->invoice_number,
+            'TransactionDesc' => "Payment for {$invoice->invoice_number}",
         ]);
 
     if (! $response->successful()) {
         throw new \RuntimeException('STK Push failed: ' . $response->body());
     }
 
-    return $response->json();
+    $data = $response->json();
+
+    return $invoice->payments()->create([
+        'provider' => 'mpesa',
+        'checkout_request_id' => $data['CheckoutRequestID'] ?? null,
+        'merchant_request_id' => $data['MerchantRequestID'] ?? null,
+        'phone' => $formattedPhone,
+        'amount' => $invoice->total,
+        'status' => 'pending',
+    ]);
 }
 
 private function formatPhone(string $phone): string
