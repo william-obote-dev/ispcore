@@ -24,4 +24,45 @@ class MpesaService
             return $response->json('access_token');
         });
     }
+
+    public function stkPush(string $phone, float $amount, string $accountReference, string $description): array
+{
+    $shortcode = config('mpesa.shortcode');
+    $passkey = config('mpesa.passkey');
+    $timestamp = now()->format('YmdHis');
+    $password = base64_encode($shortcode . $passkey . $timestamp);
+
+    $response = Http::withToken($this->getAccessToken())
+        ->post(config('mpesa.base_url') . '/mpesa/stkpush/v1/processrequest', [
+            'BusinessShortCode' => $shortcode,
+            'Password' => $password,
+            'Timestamp' => $timestamp,
+            'TransactionType' => 'CustomerPayBillOnline',
+            'Amount' => (int) $amount,
+            'PartyA' => $this->formatPhone($phone),
+            'PartyB' => $shortcode,
+            'PhoneNumber' => $this->formatPhone($phone),
+            'CallBackURL' => config('mpesa.callback_url'),
+            'AccountReference' => $accountReference,
+            'TransactionDesc' => $description,
+        ]);
+
+    if (! $response->successful()) {
+        throw new \RuntimeException('STK Push failed: ' . $response->body());
+    }
+
+    return $response->json();
+}
+
+private function formatPhone(string $phone): string
+{
+    $phone = preg_replace('/\D/', '', $phone);
+
+    if (str_starts_with($phone, '0')) {
+        $phone = '254' . substr($phone, 1);
+    }
+
+    return $phone;
+}
+
 }
