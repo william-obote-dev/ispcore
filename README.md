@@ -1,58 +1,96 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
-
-## About Laravel
-
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
-```
-
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+<div align="center">
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1B2A,100:00C6AE&height=180&section=header&text=William%20Obote&fontSize=48&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Backend-Led%20Full-Stack%20Engineer%20%C2%B7%20Cloud%20%C2%B7%20Fintech%20%C2%B7%20Ad-Tech&descAlignY=58&descSize=18&descColor=ffffff" width="100%"/>
+<br/>
+<a href="https://readme-typing-svg.demolab.com/">
+  <img src="https://readme-typing-svg.demolab.com/?font=Fira+Code&size=18&pause=1200&color=00A896&center=true&vCenter=true&width=700&lines=I+build+fintech+software+that+handles+real+money+at+scale;Backend-Led+Full-Stack+Engineer;AWS+%C2%B7+Node.js+%C2%B7+NestJS+%C2%B7+M-PESA+%C2%B7+Stripe" alt="Typing SVG" />
+</a>
+<br/><br/>
+![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)
+![Email](https://img.shields.io/badge/Email-Say%20Hi-D68910?style=for-the-badge&logo=gmail&logoColor=white)
+![Location](https://img.shields.io/badge/Nairobi,%20Kenya-📍-00A896?style=for-the-badge)
+</div>
+<br/>
+⚡ Impact at a Glance
+<div align="center">
+![30%](https://img.shields.io/badge/30%25-AWS%20Cost%20Cut-0D1B2A?style=for-the-badge&labelColor=00A896)
+![Latency](https://img.shields.io/badge/800ms→150ms-API%20Latency-0D1B2A?style=for-the-badge&labelColor=00A896)
+![Throughput](https://img.shields.io/badge/12K%2Fsec-Messages%20Sustained-0D1B2A?style=for-the-badge&labelColor=00A896)
+![Experience](https://img.shields.io/badge/4%2B%20yrs-Production%20Experience-0D1B2A?style=for-the-badge&labelColor=00A896)
+</div>
+<br/>
+🧭 What I Do
+Most software ends up slow, hard to maintain, and painful to scale. In fintech — where every millisecond and every decimal point matters — that's not a bug, it's a business risk.
+I lead cloud infrastructure migrations, design microservice architectures, and build backend systems that stay fast and reliable under real transaction load, with deep hands-on experience integrating M-PESA, Stripe, QuickBooks, and Jenga into production systems.
+<details>
+<summary><b>🎯 What I bring to every project — click to expand</b></summary>
+<br/>
+🏗️ Clean, maintainable architecture and system design from day one
+🔁 End-to-end ownership, from idea to deployment, backed by CI/CD
+🔒 A fintech mindset — performance, security, and reliability are non-negotiable
+🎯 Technical leadership — making the right call on stack, structure, and scale
+</details>
+<br/>
+🛠️ Tech Stack
+<div align="center">
+![My Skills](https://skillicons.dev/icons?i=ts,js,py,php,nodejs,nestjs,prisma,react,nextjs,vue,flutter,aws,docker,kubernetes,postgres,mysql,stripe&theme=dark&perline=9)
+</div>
+<div align="center">
+![M-PESA](https://img.shields.io/badge/-M--PESA-00A651?style=flat-square)
+![QuickBooks](https://img.shields.io/badge/-QuickBooks-2CA01C?style=flat-square&logo=quickbooks&logoColor=white)
+![JWT](https://img.shields.io/badge/-JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)
+</div>
+<br/>
+📌 Featured Projects
+<table align="center">
+<tr>
+<td colspan="2">
+🌐 ISPCore — Latest build
+API-first ISP billing & operations platform built in Laravel: VAT-compliant invoicing with sequential numbering, subscription management, and M-Pesa Daraja STK Push integration with async webhook payment confirmation — proven end-to-end against Safaricom's sandbox. Built with a provider-agnostic adapter layer designed for future banking, ERP, and CRM sync.
+`PHP/Laravel` `PostgreSQL` `M-Pesa Daraja API`
+</td>
+</tr>
+<tr>
+<td width="50%">
+🔁 DistributeQ
+Distributed message queue built from scratch — pub/sub, dead-letter queues, at-least-once delivery. Sustains ~12,000 msgs/sec under load with a real-time monitoring dashboard.
+`Node.js` `TypeScript` `Redis` `Docker` `WebSockets`
+</td>
+<td width="50%">
+💰 PesaLens
+AI-powered finance tracker parsing M-PESA SMS with LLM-based categorization to auto-classify spending. 200+ active users since launch.
+`Next.js` `NestJS` `PostgreSQL` `OpenAI API`
+</td>
+</tr>
+<tr>
+<td width="50%">
+🔗 URLShrinker · live demo
+High-throughput URL shortener handling 100k+ redirects/day using Redis caching for sub-5ms p99 latency.
+`NestJS` `Redis` `PostgreSQL` `Kubernetes`
+</td>
+<td width="50%">
+📊 LogFlow
+Structured logging pipeline with Elasticsearch full-text search, reducing mean debug time by ~70% vs. raw log tailing.
+`Node.js` `AWS CloudWatch` `Elasticsearch`
+</td>
+</tr>
+</table>
+<br/>
+📈 GitHub Stats
+<div align="center">
+<img src="https://github-readme-stats.vercel.app/api?username=william-obote-dev&show_icons=true&theme=dark&hide_border=true&bg_color=0D1B2A&title_color=00C6AE&icon_color=00C6AE&text_color=ffffff" height="165"/>
+<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=william-obote-dev&layout=compact&theme=dark&hide_border=true&bg_color=0D1B2A&title_color=00C6AE&text_color=ffffff" height="165"/>
+<img src="https://streak-stats.demolab.com/?user=william-obote-dev&theme=dark&hide_border=true&background=0D1B2A&ring=00C6AE&fire=00C6AE&currStreakLabel=00C6AE" height="165"/>
+</div>
+<br/>
+🎓 Certifications
+<div align="center">
+![Cloud](https://img.shields.io/badge/Cloud%20Developer%20Nanodegree-Udacity%20·%20Feb%202025-1A1A1A?style=flat-square)
+![Spring](https://img.shields.io/badge/Spring%20Boot%20%26%20AngularJS-Udacity%20·%202023-1A1A1A?style=flat-square)
+![React](https://img.shields.io/badge/React%20Certification-Meta%20·%20Dec%202022-1A1A1A?style=flat-square)
+</div>
+<br/>
+<div align="center">
+💬 Currently open to full-time roles, freelance contracts, and high-impact collaborations
+![Profile Views](https://komarev.com/ghpvc/?username=william-obote-dev&color=00A896&style=flat-square&label=Profile+Views)
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:00C6AE,100:0D1B2A&height=100&section=footer" width="100%"/>
+</div>
