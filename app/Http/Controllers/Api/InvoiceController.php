@@ -35,4 +35,24 @@ class InvoiceController extends Controller
 
     return response()->json($payment);
      }
+
+     public function status(Invoice $invoice): JsonResponse
+     {
+    $latestPayment = $invoice->payments()->latest()->first();
+
+    return response()->json([
+        'invoice_number' => $invoice->invoice_number,
+        'invoice_status' => $invoice->status,
+        'total' => $invoice->total,
+        'latest_payment' => $latestPayment ? [
+            'status' => $latestPayment->status,
+            'checkout_request_id' => $latestPayment->checkout_request_id,
+            'result_desc' => $latestPayment->result_desc,
+            'receipt_number' => $latestPayment->provider_receipt_number,
+            'paid_at' => $latestPayment->paid_at,
+        ] : null,
+    ]);
+       }
+
+
 }

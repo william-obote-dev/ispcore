@@ -23,3 +23,4 @@ Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
 Route::post('/mpesa/callback', [\App\Http\Controllers\Api\MpesaCallbackController::class, 'handle']);
 
 Route::post('/invoices/{invoice}/pay', [InvoiceController::class, 'pay']);
+Route::get('/invoices/{invoice}/status', [InvoiceController::class, 'status']);
