@@ -33,3 +33,125 @@ Most billing systems bolt payment providers on as an afterthought, tightly coupl
 ---
 
 ## 🏗️ Architecture
+**Key design decision:** Safaricom's callback doesn't echo back your original reference — it only returns `CheckoutRequestID`. So `CheckoutRequestID` is stored on the `Payment` record *before* the STK push is even sent, and used to match the callback when it arrives. This is a common mistake in M-Pesa integrations that this project explicitly avoids.
+
+Customer ──▶ Subscription ──▶ Invoice (VAT calculated, sequential numbering)
+│
+▼
+POST /invoices/{id}/pay
+│
+▼
+MpesaService::stkPush() ──▶ Safaricom Daraja API
+│ │
+Payment record created STK push sent to phone
+(status: pending) │
+│ ▼
+│ Customer enters M-Pesa PIN
+│ │
+▼ ▼
+POST /api/mpesa/callback ◀── Safaricom sends result
+│
+▼
+Payment matched by CheckoutRequestID,
+status updated (completed/failed),
+Invoice marked paid on success
+
+## 🚀 Getting Started
+
+### Prerequisites
+- PHP 8.4+
+- Composer
+- A PostgreSQL database (e.g. free tier on [Neon](https://neon.tech))
+- A Safaricom Developer sandbox account for M-Pesa credentials
+
+### Installation
+
+```bash
+git clone https://github.com/william-obote-dev/ispcore.git
+cd ispcore
+composer install
+cp .env.example .env
+php artisan key:generate
+```
+
+### Configuration
+
+Set these in `.env`:
+
+```env
+DB_CONNECTION=pgsql
+DB_HOST=your-postgres-host
+DB_PORT=5432
+DB_DATABASE=your-db-name
+DB_USERNAME=your-db-user
+DB_PASSWORD=your-db-password
+DB_SSLMODE=require
+
+MPESA_ENV=sandbox
+MPESA_CONSUMER_KEY=your-consumer-key
+MPESA_CONSUMER_SECRET=your-consumer-secret
+MPESA_SHORTCODE=174379
+MPESA_PASSKEY=your-sandbox-passkey
+MPESA_CALLBACK_URL=https://your-public-url/api/mpesa/callback
+```
+
+### Run migrations
+
+```bash
+php artisan migrate
+```
+
+### Start the server
+
+```bash
+php artisan serve
+```
+
+---
+
+## 🧪 API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/customers` | Create a customer |
+| `GET` | `/api/customers/{id}` | View customer with subscriptions & invoices |
+| `POST` | `/api/customers/{id}/subscriptions` | Subscribe a customer to a plan |
+| `POST` | `/api/subscriptions/{id}/invoice` | Generate a VAT-compliant invoice |
+| `POST` | `/api/invoices/{id}/pay` | Trigger M-Pesa STK Push for an invoice |
+| `GET` | `/api/payments/{id}` | Check payment status |
+| `POST` | `/api/mpesa/callback` | Safaricom webhook (not called by clients) |
+
+---
+
+## 🗺️ Roadmap
+
+- [x] Core billing engine with VAT-compliant invoicing
+- [x] M-Pesa Daraja STK Push + webhook confirmation
+- [ ] Banking API reconciliation (Jenga)
+- [ ] Payment gateway integration (Paystack)
+- [ ] ERP sync (Odoo) for accounting/journal entries
+- [ ] CRM sync (HubSpot) for sales/support handoff
+- [ ] Network session simulation (RADIUS-style)
+
+---
+
+## 🛠️ Tech Stack
+
+**Backend:** PHP, Laravel 13
+**Database:** PostgreSQL (Neon)
+**Payments:** M-Pesa Daraja API
+**Dev environment:** GitHub Codespaces (zero local setup)
+
+---
+
+## 📄 License
+
+MIT — see [LICENSE](LICENSE)
+
+---
+
+<div align="center">
+
+Built by **[William Obote](https://github.com/william-obote-dev)** · [LinkedIn](https://linkedin.com/in/william-obote)
+
+</div>
