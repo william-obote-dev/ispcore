@@ -24,5 +24,6 @@ Route::post('/mpesa/callback', [\App\Http\Controllers\Api\MpesaCallbackControlle
 
 Route::post('/invoices/{invoice}/pay', [InvoiceController::class, 'pay']);
 Route::get('/invoices/{invoice}/status', [InvoiceController::class, 'status']);
+Route::post('/invoices/{invoice}/pay-with-card', [InvoiceController::class, 'payWithCard']);
 
 Route::get('/paystack/callback', [\App\Http\Controllers\Api\PaystackCallbackController::class, 'handle']);

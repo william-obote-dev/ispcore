@@ -54,5 +54,21 @@ class InvoiceController extends Controller
     ]);
        }
 
+    public function payWithCard(Request $request, Invoice $invoice)
+     {
+    $validated = $request->validate([
+        'email' => 'required|email',
+    ]);
+
+    $result = app(\App\Services\PaystackService::class)->initialize($invoice, $validated['email']);
+
+    return response()->json([
+        'authorization_url' => $result['authorization_url'],
+        'reference' => $result['reference'],
+        'payment' => $result['payment'],
+    ]);
+    
+      }
+
 
 }
