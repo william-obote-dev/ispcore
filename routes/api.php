@@ -27,3 +27,5 @@ Route::get('/invoices/{invoice}/status', [InvoiceController::class, 'status']);
 Route::post('/invoices/{invoice}/pay-with-card', [InvoiceController::class, 'payWithCard']);
 
 Route::get('/paystack/callback', [\App\Http\Controllers\Api\PaystackCallbackController::class, 'handle']);
+
+Route::post('/kcb/ipn', [\App\Http\Controllers\Api\KcbIpnController::class, 'handle']);
