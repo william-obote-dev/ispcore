@@ -47,4 +47,29 @@ class HubSpotService
 
         return $created->json('id');
     }
+
+    public function createDeal(string $contactId, string $dealName, float $amount, string $stage = 'appointmentscheduled'): string
+{
+    $response = $this->client()->post('/crm/v3/objects/deals', [
+        'properties' => [
+            'dealname' => $dealName,
+            'amount' => $amount,
+            'dealstage' => $stage,
+        ],
+        'associations' => [[
+            'to' => ['id' => $contactId],
+            'types' => [[
+                'associationCategory' => 'HUBSPOT_DEFINED',
+                'associationTypeId' => 3, // Contact to Deal
+            ]],
+        ]],
+    ]);
+
+    if (! $response->successful()) {
+        throw new \RuntimeException('HubSpot deal creation failed: ' . $response->body());
+    }
+
+    return $response->json('id');
+}
+
 }
