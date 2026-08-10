@@ -41,4 +41,10 @@ class Subscription extends Model
     {
         return $this->hasMany(Invoice::class);
     }
+
+    public function networkSession(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+    return $this->hasOne(NetworkSession::class);
+     }
+
 }
