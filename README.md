@@ -1,3 +1,4 @@
+
 <div align="center">
 
 # 🌐 ISPCore
@@ -42,33 +43,6 @@ The point of the project isn't any single integration — it's proving that eigh
 ---
 
 ## 🏗️ Architecture
-
-```
-Customer ──▶ Subscription ──▶ Invoice (VAT calculated, sequential numbering)
-                                   │
-                     ┌─────────────┼─────────────┐
-                     ▼             ▼             ▼
-                 M-Pesa        Paystack      (bank transfer
-              STK Push        Checkout        via KCB, for
-                     │             │           supplier payouts)
-                     ▼             ▼
-            ┌───────────────────────────────┐
-            │      payments table            │
-            │  provider · status · receipt   │
-            └───────────────┬────────────────┘
-                             │  on success
-              ┌──────────────┼──────────────┐
-              ▼              ▼              ▼
-        Invoice → paid   NetworkSession   (Odoo sync,
-                          restored          on demand)
-
-  ── overdue lifecycle (php artisan ispcore:check-overdue) ──
-
-  Invoice overdue ──▶ SMS reminder (Africa's Talking)
-                  ├──▶ NetworkSession throttled/suspended
-                  └──▶ HubSpot deal created for sales follow-up
-```
-
 **The one idea that ties it all together:** every external system sits behind a `*Service` class with a consistent shape (authenticate → act → return a normalized result). `MpesaService`, `PaystackService`, `KcbService`, `OdooService`, and `HubSpotService` are all independently swappable — M-Pesa could be replaced with another mobile money provider, or KCB with Co-op or Equity, by writing one new service class, not by touching the billing engine.
 
 ---
@@ -77,7 +51,7 @@ Customer ──▶ Subscription ──▶ Invoice (VAT calculated, sequential nu
 
 Not every integration completes a full happy-path transaction in sandbox, and that's worth being upfront about rather than hiding:
 
-- **KCB Buni**: the FundsTransfer request is built exactly to KCB's official spec and verified to produce *the same validation response as KCB's own test tool* using their own sample data. Full completion requires KCB to whitelist real test account numbers — an manual onboarding step their own documentation confirms, not a gap in this integration.
+- **KCB Buni**: the FundsTransfer request is built exactly to KCB's official spec and verified to produce *the same validation response as KCB's own test tool* using their own sample data. Full completion requires KCB to whitelist real test account numbers — a manual onboarding step their own documentation confirms, not a gap in this integration.
 - **Odoo**: uses a free 15-day trial (Odoo doesn't offer a permanent free hosted sandbox). The integration itself — auth, customer sync, invoice creation — is fully proven and visually confirmed in the live UI.
 - **Network automation**: intentionally simulated. In production, `NetworkService`'s methods would issue real RADIUS CoA (Change of Authorization) packets to network hardware instead of updating a database row — the business logic (when to throttle, when to restore) is real and identical either way.
 
