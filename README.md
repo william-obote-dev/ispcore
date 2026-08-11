@@ -2,12 +2,16 @@
 
 # 🌐 ISPCore
 
-**API-first billing & operations platform for ISPs — VAT-compliant invoicing, subscription management, and M-Pesa Daraja payment integration.**
+**A multi-provider ISP billing & operations platform — VAT-compliant invoicing, payments across three rails, ERP and CRM sync, SMS notifications, and automated network enforcement, all tied together by one adapter-based architecture.**
 
 ![PHP](https://img.shields.io/badge/-PHP-777BB4?style=flat-square&logo=php&logoColor=white)
 ![Laravel](https://img.shields.io/badge/-Laravel-FF2D20?style=flat-square&logo=laravel&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/-PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)
-![M-Pesa](https://img.shields.io/badge/-M--Pesa%20Daraja-00A651?style=flat-square)
+![M-Pesa](https://img.shields.io/badge/-M--Pesa-00A651?style=flat-square)
+![Paystack](https://img.shields.io/badge/-Paystack-00C3F7?style=flat-square)
+![KCB](https://img.shields.io/badge/-KCB%20Buni-006437?style=flat-square)
+![Odoo](https://img.shields.io/badge/-Odoo-714B67?style=flat-square&logo=odoo&logoColor=white)
+![HubSpot](https://img.shields.io/badge/-HubSpot-FF7A59?style=flat-square&logo=hubspot&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-00A896?style=flat-square)
 
 </div>
@@ -16,53 +20,75 @@
 
 ## 📖 Overview
 
-ISPCore is a billing and operations platform built for a real-world scenario: how a small-to-mid-size ISP actually runs its back office — invoicing customers, collecting payment via M-Pesa, and eventually reconciling with banks and syncing to accounting/CRM systems.
+ISPCore simulates how a real Kenyan ISP runs its back office end-to-end: bill a customer, collect payment on whichever rail they prefer, push the transaction into real accounting, flag at-risk accounts for the sales team, and automatically throttle service for anyone who doesn't pay.
 
-Most billing systems bolt payment providers on as an afterthought, tightly coupled to one API. ISPCore is built the opposite way: every external integration sits behind an adapter interface, so swapping M-Pesa for a bank, or Paystack for Flutterwave, is a configuration change — not a rewrite.
+The point of the project isn't any single integration — it's proving that eight very different external systems (two payment gateways, a bank, an accounting ERP, a CRM, an SMS gateway, and a simulated network layer) can all sit behind one clean internal architecture without the codebase turning into spaghetti. Every external system implements the same pattern: authenticate, act, record the result in a shared `payments` table (or equivalent), and stay swappable.
 
 ---
 
-## ✨ Features (implemented so far)
+## ✨ What's built — all 8 phases complete
 
-- **VAT-compliant invoicing** — Kenyan 16% VAT calculated and stored explicitly, with sequential, gap-free invoice numbering (`INV-2026-0001`, `INV-2026-0002`, ...)
-- **Customer & subscription management** — customers, internet plans, and active subscriptions with proper relational integrity
-- **M-Pesa Daraja integration** — full STK Push flow: OAuth token generation (cached), push initiation, and asynchronous webhook confirmation
-- **Payment tracking** — a dedicated `payments` table decoupled from invoices, tracking provider, status, and raw provider responses — built to support multiple payment providers side by side
-- **REST API** — fully testable via curl/Postman, no frontend required
+| # | Phase | What it proves |
+|---|---|---|
+| 1 | **Core billing engine** | VAT-compliant invoicing (16% KE VAT), sequential gap-free invoice numbers, subscription management |
+| 2 | **M-Pesa Daraja** | Full STK Push flow — OAuth token caching, push initiation, async webhook confirmation, matched by `CheckoutRequestID` (not a client-supplied reference, which Safaricom's callback doesn't echo back) |
+| 3 | **SMS (Africa's Talking)** | Payment confirmations and overdue reminders, fired automatically from payment/billing events |
+| 4 | **Paystack** | A second, independent payment rail sharing the exact same `payments` table and adapter pattern as M-Pesa — the concrete proof the architecture is provider-agnostic, not just M-Pesa with extra steps |
+| 5 | **KCB Buni (banking)** | Full OAuth2 + FundsTransfer integration, verified request-for-request against KCB's own official sandbox test tool; IPN webhook handler for transfer confirmations |
+| 6 | **Odoo (ERP)** | JSON-RPC integration (a different protocol from every other REST-based integration in this project) that finds-or-creates the customer and pushes a real invoice into Odoo's accounting — visually confirmed in the live Odoo UI |
+| 7 | **HubSpot (CRM)** | Contact find-or-create plus deal creation, used to surface overdue accounts to a sales/support pipeline automatically |
+| 8 | **Network automation** | A simulated RADIUS/Mikrotik-style session layer, tied to a scheduled command that throttles or suspends service based on how overdue an invoice is — and restores it automatically the moment a payment succeeds |
 
 ---
 
 ## 🏗️ Architecture
-**Key design decision:** Safaricom's callback doesn't echo back your original reference — it only returns `CheckoutRequestID`. So `CheckoutRequestID` is stored on the `Payment` record *before* the STK push is even sent, and used to match the callback when it arrives. This is a common mistake in M-Pesa integrations that this project explicitly avoids.
 
+```
 Customer ──▶ Subscription ──▶ Invoice (VAT calculated, sequential numbering)
-│
-▼
-POST /invoices/{id}/pay
-│
-▼
-MpesaService::stkPush() ──▶ Safaricom Daraja API
-│ │
-Payment record created STK push sent to phone
-(status: pending) │
-│ ▼
-│ Customer enters M-Pesa PIN
-│ │
-▼ ▼
-POST /api/mpesa/callback ◀── Safaricom sends result
-│
-▼
-Payment matched by CheckoutRequestID,
-status updated (completed/failed),
-Invoice marked paid on success
+                                   │
+                     ┌─────────────┼─────────────┐
+                     ▼             ▼             ▼
+                 M-Pesa        Paystack      (bank transfer
+              STK Push        Checkout        via KCB, for
+                     │             │           supplier payouts)
+                     ▼             ▼
+            ┌───────────────────────────────┐
+            │      payments table            │
+            │  provider · status · receipt   │
+            └───────────────┬────────────────┘
+                             │  on success
+              ┌──────────────┼──────────────┐
+              ▼              ▼              ▼
+        Invoice → paid   NetworkSession   (Odoo sync,
+                          restored          on demand)
+
+  ── overdue lifecycle (php artisan ispcore:check-overdue) ──
+
+  Invoice overdue ──▶ SMS reminder (Africa's Talking)
+                  ├──▶ NetworkSession throttled/suspended
+                  └──▶ HubSpot deal created for sales follow-up
+```
+
+**The one idea that ties it all together:** every external system sits behind a `*Service` class with a consistent shape (authenticate → act → return a normalized result). `MpesaService`, `PaystackService`, `KcbService`, `OdooService`, and `HubSpotService` are all independently swappable — M-Pesa could be replaced with another mobile money provider, or KCB with Co-op or Equity, by writing one new service class, not by touching the billing engine.
+
+---
+
+## 🔍 Honest notes on real-world integration limits
+
+Not every integration completes a full happy-path transaction in sandbox, and that's worth being upfront about rather than hiding:
+
+- **KCB Buni**: the FundsTransfer request is built exactly to KCB's official spec and verified to produce *the same validation response as KCB's own test tool* using their own sample data. Full completion requires KCB to whitelist real test account numbers — an manual onboarding step their own documentation confirms, not a gap in this integration.
+- **Odoo**: uses a free 15-day trial (Odoo doesn't offer a permanent free hosted sandbox). The integration itself — auth, customer sync, invoice creation — is fully proven and visually confirmed in the live UI.
+- **Network automation**: intentionally simulated. In production, `NetworkService`'s methods would issue real RADIUS CoA (Change of Authorization) packets to network hardware instead of updating a database row — the business logic (when to throttle, when to restore) is real and identical either way.
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- PHP 8.4+
-- Composer
+- PHP 8.4+, Composer
 - A PostgreSQL database (e.g. free tier on [Neon](https://neon.tech))
-- A Safaricom Developer sandbox account for M-Pesa credentials
+- Sandbox accounts: Safaricom Daraja, Paystack, Africa's Talking, KCB Buni, Odoo Online, HubSpot (all free)
 
 ### Installation
 
@@ -72,39 +98,28 @@ cd ispcore
 composer install
 cp .env.example .env
 php artisan key:generate
+php artisan migrate
+php artisan serve
 ```
 
-### Configuration
-
-Set these in `.env`:
+### Key `.env` variables
 
 ```env
 DB_CONNECTION=pgsql
-DB_HOST=your-postgres-host
-DB_PORT=5432
-DB_DATABASE=your-db-name
-DB_USERNAME=your-db-user
-DB_PASSWORD=your-db-password
-DB_SSLMODE=require
+DB_HOST=... DB_DATABASE=... DB_USERNAME=... DB_PASSWORD=... DB_SSLMODE=require
 
-MPESA_ENV=sandbox
-MPESA_CONSUMER_KEY=your-consumer-key
-MPESA_CONSUMER_SECRET=your-consumer-secret
-MPESA_SHORTCODE=174379
-MPESA_PASSKEY=your-sandbox-passkey
-MPESA_CALLBACK_URL=https://your-public-url/api/mpesa/callback
-```
+MPESA_CONSUMER_KEY=... MPESA_CONSUMER_SECRET=... MPESA_SHORTCODE=174379
+MPESA_PASSKEY=... MPESA_CALLBACK_URL=https://your-public-url/api/mpesa/callback
 
-### Run migrations
+PAYSTACK_SECRET_KEY=sk_test_...
 
-```bash
-php artisan migrate
-```
+AT_USERNAME=sandbox AT_API_KEY=...
 
-### Start the server
+KCB_CONSUMER_KEY=... KCB_CONSUMER_SECRET=... KCB_COMPANY_CODE=... KCB_DEBIT_ACCOUNT=...
 
-```bash
-php artisan serve
+ODOO_URL=https://yourdb.odoo.com ODOO_DATABASE=... ODOO_USERNAME=... ODOO_API_KEY=...
+
+HUBSPOT_ACCESS_TOKEN=...
 ```
 
 ---
@@ -114,24 +129,33 @@ php artisan serve
 | Method | Endpoint | Description |
 |---|---|---|
 | `POST` | `/api/customers` | Create a customer |
-| `GET` | `/api/customers/{id}` | View customer with subscriptions & invoices |
 | `POST` | `/api/customers/{id}/subscriptions` | Subscribe a customer to a plan |
 | `POST` | `/api/subscriptions/{id}/invoice` | Generate a VAT-compliant invoice |
-| `POST` | `/api/invoices/{id}/pay` | Trigger M-Pesa STK Push for an invoice |
+| `POST` | `/api/invoices/{id}/pay` | Trigger M-Pesa STK Push |
+| `POST` | `/api/invoices/{id}/pay-with-card` | Trigger Paystack checkout |
 | `GET` | `/api/payments/{id}` | Check payment status |
-| `POST` | `/api/mpesa/callback` | Safaricom webhook (not called by clients) |
+| `POST` | `/api/mpesa/callback` | Safaricom webhook |
+| `GET` | `/api/paystack/callback` | Paystack verification callback |
+| `POST` | `/api/kcb/ipn` | KCB transfer notification webhook |
+| — | `php artisan ispcore:check-overdue` | Console command: detects overdue invoices, throttles/suspends network access, sends SMS reminders, creates HubSpot deals |
 
 ---
 
-## 🗺️ Roadmap
+## 📸 Proof of work
 
-- [x] Core billing engine with VAT-compliant invoicing
-- [x] M-Pesa Daraja STK Push + webhook confirmation
-- [ ] Banking API reconciliation (Jenga)
-- [ ] Payment gateway integration (Paystack)
-- [ ] ERP sync (Odoo) for accounting/journal entries
-- [ ] CRM sync (HubSpot) for sales/support handoff
-- [ ] Network session simulation (RADIUS-style)
+**Odoo — synced invoice appears as a real draft invoice in the accounting UI**
+
+![Odoo invoice draft](./proof-screenshots/odoo-invoice-draft.png)
+
+**Odoo — invoice list confirming the sync (KES 3,000, matching ISPCore's invoice total)**
+
+![Odoo invoices list](./proof-screenshots/odoo-invoices-list.png)
+
+**HubSpot — customer synced as a real CRM contact**
+
+![HubSpot contacts](./proof-screenshots/hubspot-contacts.png)
+
+*(Add a HubSpot deals screenshot here too, showing the "Overdue: INV-..." deal created by `php artisan ispcore:check-overdue`.)*
 
 ---
 
@@ -139,7 +163,11 @@ php artisan serve
 
 **Backend:** PHP, Laravel 13
 **Database:** PostgreSQL (Neon)
-**Payments:** M-Pesa Daraja API
+**Payments:** M-Pesa Daraja, Paystack
+**Banking:** KCB Buni
+**ERP:** Odoo (JSON-RPC)
+**CRM:** HubSpot
+**SMS:** Africa's Talking
 **Dev environment:** GitHub Codespaces (zero local setup)
 
 ---
