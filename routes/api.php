@@ -29,3 +29,9 @@ Route::post('/invoices/{invoice}/pay-with-card', [InvoiceController::class, 'pay
 Route::get('/paystack/callback', [\App\Http\Controllers\Api\PaystackCallbackController::class, 'handle']);
 
 Route::post('/kcb/ipn', [\App\Http\Controllers\Api\KcbIpnController::class, 'handle']);
+
+Route::post('/auth/login', [\App\Http\Controllers\Api\AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/auth/logout', [\App\Http\Controllers\Api\AuthController::class, 'logout']);
+    Route::get('/auth/me', [\App\Http\Controllers\Api\AuthController::class, 'me']);
+});
