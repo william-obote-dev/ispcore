@@ -5,8 +5,89 @@ import { shellHtml, attachShellEvents } from '../shell.js';
 import { emptyState, loadingHtml, errorHtml } from '../lib/ui.js';
 import { statusBadge, dateFmt, money, escapeHtml } from '../lib/format.js';
 
+// ── List ──────────────────────────────────────────────────────────────────
+
+export async function renderSubscriptionsList(root) {
+    root.innerHTML = shellHtml('subscriptions', loadingHtml());
+    attachShellEvents(root);
+
+    let subscriptions;
+    try {
+        subscriptions = await api('/subscriptions');
+    } catch (err) {
+        root.querySelector('main').innerHTML = errorHtml(err.message);
+        return;
+    }
+
+    root.querySelector('main').innerHTML = listMarkup(subscriptions);
+
+    root.querySelectorAll('[data-action="open-sub"]').forEach((row) => {
+        row.addEventListener('click', () => navigate(`/subscriptions/${row.dataset.id}`));
+    });
+
+    const search = root.querySelector('[data-role="search"]');
+    if (search) {
+        search.addEventListener('input', () => {
+            const q = search.value.trim().toLowerCase();
+            root.querySelectorAll('[data-row]').forEach((row) => {
+                row.classList.toggle('hidden', Boolean(q) && !row.dataset.search.includes(q));
+            });
+        });
+    }
+}
+
+function listMarkup(subscriptions) {
+    const rows = subscriptions
+        .map(
+            (s) => `
+        <tr data-row data-action="open-sub" data-id="${s.id}"
+            data-search="${escapeHtml(((s.customer?.name || '') + ' ' + (s.plan?.name || '')).toLowerCase())}"
+            class="cursor-pointer hover:bg-slate-50">
+            <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-900">${escapeHtml(s.customer?.name || '—')}</td>
+            <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-500">${escapeHtml(s.plan?.name || '—')}</td>
+            <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-500">${s.plan ? money(s.plan.price) : '—'}</td>
+            <td class="whitespace-nowrap px-4 py-3 text-sm">${statusBadge(s.status)}</td>
+            <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-400">${dateFmt(s.start_date)}</td>
+        </tr>
+    `
+        )
+        .join('');
+
+    return `
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h1 class="text-xl font-semibold text-slate-900">Subscriptions</h1>
+                <p class="text-sm text-slate-500">${subscriptions.length} total</p>
+            </div>
+            <input data-role="search" type="search" placeholder="Search by customer or plan…"
+                class="w-64 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500" />
+        </div>
+        ${
+            subscriptions.length === 0
+                ? emptyState('No subscriptions yet', 'Subscribe a customer to a plan from their profile page.')
+                : `
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Customer</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Plan</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Price</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Started</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">${rows}</tbody>
+            </table>
+        </div>`
+        }
+    `;
+}
+
+// ── Detail ────────────────────────────────────────────────────────────────
+
 export async function renderSubscriptionDetail(root, { id }) {
-    root.innerHTML = shellHtml('customers', loadingHtml());
+    root.innerHTML = shellHtml('subscriptions', loadingHtml());
     attachShellEvents(root);
 
     let subscription;

@@ -13,6 +13,13 @@ class InvoiceController extends Controller
 {
     public function __construct(private InvoiceService $invoiceService) {}
 
+    public function index(): JsonResponse
+    {
+        return response()->json(
+            Invoice::with('customer', 'subscription.plan')->latest()->get()
+        );
+    }
+
     public function generate(Subscription $subscription): JsonResponse
     {
         $invoice = $this->invoiceService->generateForSubscription($subscription);

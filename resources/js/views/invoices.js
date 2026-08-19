@@ -1,15 +1,129 @@
 import { api } from '../lib/api.js';
+import { navigate } from '../router.js';
 import { toast } from '../lib/toast.js';
 import { shellHtml, attachShellEvents } from '../shell.js';
 import { openModal, showFormError } from '../lib/modal.js';
-import { field, loadingHtml, errorHtml } from '../lib/ui.js';
+import { field, emptyState, loadingHtml, errorHtml } from '../lib/ui.js';
 import { statusBadge, dateFmt, dateTimeFmt, money, escapeHtml } from '../lib/format.js';
 
 let pollTimer = null;
 
+// ── List ──────────────────────────────────────────────────────────────────
+
+export async function renderInvoicesList(root) {
+    root.innerHTML = shellHtml('invoices', loadingHtml());
+    attachShellEvents(root);
+
+    let invoices;
+    try {
+        invoices = await api('/invoices');
+    } catch (err) {
+        root.querySelector('main').innerHTML = errorHtml(err.message);
+        return;
+    }
+
+    root.querySelector('main').innerHTML = listMarkup(invoices);
+
+    root.querySelectorAll('[data-action="open-invoice"]').forEach((row) => {
+        row.addEventListener('click', () => navigate(`/invoices/${row.dataset.id}`));
+    });
+
+    const search = root.querySelector('[data-role="search"]');
+    const filterButtons = root.querySelectorAll('[data-role="status-filter"]');
+    let activeStatus = 'all';
+
+    function applyFilters() {
+        const q = search.value.trim().toLowerCase();
+        root.querySelectorAll('[data-row]').forEach((row) => {
+            const matchesSearch = !q || row.dataset.search.includes(q);
+            const matchesStatus = activeStatus === 'all' || row.dataset.status === activeStatus;
+            row.classList.toggle('hidden', !(matchesSearch && matchesStatus));
+        });
+    }
+
+    if (search) search.addEventListener('input', applyFilters);
+    filterButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            activeStatus = btn.dataset.status;
+            filterButtons.forEach((b) => {
+                if (b !== btn) {
+                    b.classList.remove('bg-slate-900', 'text-white');
+                    b.classList.add('text-slate-600');
+                } else {
+                    b.classList.remove('text-slate-600');
+                    b.classList.add('bg-slate-900', 'text-white');
+                }
+            });
+            applyFilters();
+        });
+    });
+}
+
+const STATUS_FILTERS = ['all', 'draft', 'sent', 'paid', 'overdue', 'cancelled'];
+
+function listMarkup(invoices) {
+    const rows = invoices
+        .map(
+            (inv) => `
+        <tr data-row data-action="open-invoice" data-id="${inv.id}" data-status="${inv.status}"
+            data-search="${escapeHtml((inv.invoice_number + ' ' + (inv.customer?.name || '')).toLowerCase())}"
+            class="cursor-pointer hover:bg-slate-50">
+            <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-900">${escapeHtml(inv.invoice_number)}</td>
+            <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-500">${escapeHtml(inv.customer?.name || '—')}</td>
+            <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-500">${money(inv.total)}</td>
+            <td class="whitespace-nowrap px-4 py-3 text-sm">${statusBadge(inv.status)}</td>
+            <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-400">${dateFmt(inv.due_date)}</td>
+        </tr>
+    `
+        )
+        .join('');
+
+    const filterButtons = STATUS_FILTERS.map(
+        (s) => `
+        <button data-role="status-filter" data-status="${s}"
+            class="rounded-lg px-3 py-1.5 text-xs font-medium capitalize ${s === 'all' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}">
+            ${s}
+        </button>
+    `
+    ).join('');
+
+    return `
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h1 class="text-xl font-semibold text-slate-900">Invoices</h1>
+                <p class="text-sm text-slate-500">${invoices.length} total</p>
+            </div>
+            <input data-role="search" type="search" placeholder="Search by invoice # or customer…"
+                class="w-64 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500" />
+        </div>
+        <div class="mb-4 flex flex-wrap gap-1">${filterButtons}</div>
+        ${
+            invoices.length === 0
+                ? emptyState('No invoices yet', 'Generate an invoice from a customer\u2019s subscription.')
+                : `
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Invoice #</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Customer</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Total</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Due</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">${rows}</tbody>
+            </table>
+        </div>`
+        }
+    `;
+}
+
+// ── Detail ────────────────────────────────────────────────────────────────
+
 export async function renderInvoiceDetail(root, { id }) {
     stopPolling();
-    root.innerHTML = shellHtml('customers', loadingHtml());
+    root.innerHTML = shellHtml('invoices', loadingHtml());
     attachShellEvents(root);
 
     let invoice;

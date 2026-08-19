@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\PlanController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\MpesaCallbackController;
 use App\Http\Controllers\Api\PaystackCallbackController;
@@ -30,14 +31,19 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/plans', [PlanController::class, 'index']);
 
+    Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
+
     Route::get('/customers', [CustomerController::class, 'index']);
     Route::post('/customers', [CustomerController::class, 'store']);
     Route::get('/customers/{customer}', [CustomerController::class, 'show']);
+    Route::patch('/customers/{customer}', [CustomerController::class, 'update']);
 
     Route::post('/customers/{customer}/subscriptions', [SubscriptionController::class, 'store']);
+    Route::get('/subscriptions', [SubscriptionController::class, 'index']);
     Route::get('/subscriptions/{subscription}', [SubscriptionController::class, 'show']);
 
     Route::post('/subscriptions/{subscription}/invoice', [InvoiceController::class, 'generate']);
+    Route::get('/invoices', [InvoiceController::class, 'index']);
     Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
     Route::get('/invoices/{invoice}/status', [InvoiceController::class, 'status']);
     Route::post('/invoices/{invoice}/pay', [InvoiceController::class, 'pay']);

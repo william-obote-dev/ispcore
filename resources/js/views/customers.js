@@ -201,9 +201,19 @@ function customerDetailMarkup(customer) {
                     ${customer.address ? `<div class="sm:col-span-2"><span class="text-slate-400">Address:</span> ${escapeHtml(customer.address)}</div>` : ''}
                 </dl>
             </div>
-            <button data-action="new-subscription" class="shrink-0 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
-                + New subscription
-            </button>
+            <div class="flex shrink-0 flex-wrap gap-2">
+                <button data-action="edit-customer" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                    Edit
+                </button>
+                ${
+                    customer.status === 'active'
+                        ? `<button data-action="deactivate-customer" class="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50">Deactivate</button>`
+                        : `<button data-action="reactivate-customer" class="rounded-lg border border-emerald-200 px-4 py-2 text-sm font-medium text-emerald-600 hover:bg-emerald-50">Reactivate</button>`
+                }
+                <button data-action="new-subscription" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+                    + New subscription
+                </button>
+            </div>
         </div>
 
         <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Subscriptions</h2>
@@ -265,6 +275,74 @@ function wireCustomerDetail(root, customer) {
     if (newSubBtn) {
         newSubBtn.addEventListener('click', () => openCreateSubscriptionModal(customer));
     }
+
+    root.querySelector('[data-action="edit-customer"]')?.addEventListener('click', () => {
+        openEditCustomerModal(customer, () => renderCustomerDetail(root, { id: customer.id }));
+    });
+
+    root.querySelector('[data-action="deactivate-customer"]')?.addEventListener('click', () => {
+        setCustomerStatus(root, customer, 'inactive');
+    });
+
+    root.querySelector('[data-action="reactivate-customer"]')?.addEventListener('click', () => {
+        setCustomerStatus(root, customer, 'active');
+    });
+}
+
+async function setCustomerStatus(root, customer, status) {
+    try {
+        await api(`/customers/${customer.id}`, { method: 'PATCH', body: { status } });
+        toast(status === 'active' ? 'Customer reactivated' : 'Customer deactivated', 'success');
+        renderCustomerDetail(root, { id: customer.id });
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+function openEditCustomerModal(customer, onSaved) {
+    const bodyHtml = `
+        <form data-form="edit-customer" class="space-y-4">
+            ${field('name', 'Full name', 'text', true)}
+            ${field('email', 'Email', 'email', true)}
+            ${field('phone', 'Phone', 'text', true)}
+            ${field('kra_pin', 'KRA PIN', 'text', false)}
+            ${textareaField('address', 'Address', false)}
+            <div data-role="form-error" class="hidden rounded-lg bg-red-50 p-3 text-sm text-red-700"></div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" data-close class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">Cancel</button>
+                <button type="submit" class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Save changes</button>
+            </div>
+        </form>
+    `;
+
+    const { close, el } = openModal('Edit customer', bodyHtml);
+    const form = el.querySelector('[data-form="edit-customer"]');
+
+    // Pre-fill with the current values.
+    form.querySelector('[name="name"]').value = customer.name || '';
+    form.querySelector('[name="email"]').value = customer.email || '';
+    form.querySelector('[name="phone"]').value = customer.phone || '';
+    form.querySelector('[name="kra_pin"]').value = customer.kra_pin || '';
+    form.querySelector('[name="address"]').value = customer.address || '';
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const data = Object.fromEntries(new FormData(form).entries());
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving…';
+
+        try {
+            await api(`/customers/${customer.id}`, { method: 'PATCH', body: data });
+            toast('Customer updated', 'success');
+            close();
+            onSaved?.();
+        } catch (err) {
+            showFormError(form, err);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Save changes';
+        }
+    });
 }
 
 async function openCreateSubscriptionModal(customer) {

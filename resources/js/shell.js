@@ -3,7 +3,10 @@ import { navigate } from './router.js';
 import { escapeHtml } from './lib/format.js';
 
 const NAV = [
+    { key: 'dashboard', label: 'Dashboard', path: '/dashboard' },
     { key: 'customers', label: 'Customers', path: '/customers' },
+    { key: 'subscriptions', label: 'Subscriptions', path: '/subscriptions' },
+    { key: 'invoices', label: 'Invoices', path: '/invoices' },
     { key: 'plans', label: 'Plans', path: '/plans' },
 ];
 
@@ -46,8 +49,11 @@ export function shellHtml(activeKey, innerHtml) {
                         <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">IC</div>
                         <span class="font-semibold text-slate-900">ISPCore</span>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+                        <a href="/dashboard" class="text-sm text-slate-500">Dashboard</a>
                         <a href="/customers" class="text-sm text-slate-500">Customers</a>
+                        <a href="/subscriptions" class="text-sm text-slate-500">Subscriptions</a>
+                        <a href="/invoices" class="text-sm text-slate-500">Invoices</a>
                         <a href="/plans" class="text-sm text-slate-500">Plans</a>
                         <button data-action="logout" class="text-sm text-slate-500">Log out</button>
                     </div>

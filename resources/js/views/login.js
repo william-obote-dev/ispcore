@@ -48,7 +48,7 @@ export async function renderLogin(root) {
             const result = await api('/auth/login', { method: 'POST', body: data });
             auth.setSession(result.token, result.user);
             toast(`Welcome back, ${result.user.name}`, 'success');
-            navigate('/customers');
+            navigate('/dashboard');
         } catch (err) {
             const message = err instanceof ApiError ? err.message : 'Unable to sign in.';
             errorBox.textContent = message;

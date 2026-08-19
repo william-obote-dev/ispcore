@@ -33,4 +33,20 @@ class CustomerController extends Controller
     {
         return response()->json($customer->load('subscriptions.plan', 'invoices'));
     }
+
+    public function update(Request $request, Customer $customer): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|email|unique:customers,email,' . $customer->id,
+            'phone' => 'sometimes|required|string|unique:customers,phone,' . $customer->id,
+            'kra_pin' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+            'status' => 'sometimes|required|in:active,suspended,inactive',
+        ]);
+
+        $customer->update($validated);
+
+        return response()->json($customer->fresh()->load('subscriptions.plan', 'invoices'));
+    }
 }

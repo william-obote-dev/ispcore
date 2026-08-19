@@ -53,7 +53,7 @@ export async function api(path, { method = 'GET', body } = {}) {
         throw new ApiError('Could not reach the server. Check your connection and try again.', 0);
     }
 
-    if (res.status === 401) {
+    if (res.status === 401 && path !== '/auth/login') {
         auth.clear();
         if (location.pathname !== '/login') {
             navigate('/login', { replace: true });
